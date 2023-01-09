@@ -1,0 +1,198 @@
+<script type="text/javascript">
+    RED.nodes.registerType('nixtla', {
+        category: "function",
+        color: "#C0DEED",
+        defaults: {
+            name: { value: "" },
+            nixtlaConfig: {
+                type: "nixtla-config",
+                required: true
+            },
+            topic: { value: "automl_forecast" },
+            forecast_horizon: { value: 7 },
+            sensibility: { value: 90 },
+            seasonality: { value: 1 },
+            model: { value: "" },
+            cv: { value: false },
+            max_steps: { value: 0 },
+            timestamp: { value: "" },
+            value: { value: "" },
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-cog",
+        label: function () {
+            return this.name || "nixtla";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="nixtla">
+    <div class="form-row">
+		<label for="node-input-nixtlaConfig"><i class="fa fa-user"></i> Config</label>
+		<input type="text" id="node-input-nixtlaConfig">
+	</div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tag"></i> Topic</label>
+        <select id="node-input-topic" placeholder="Topic">
+            <option value="automl_forecast">Automl Forecast</option>
+            <option value="automl_anomaly">Automl Anomaly</option>
+            <option value="forecast">Low Latency Forecast</option>
+            <option value="neural_transfer">Neural Transfer Learning Forecast</option>
+            <option value="anomaly_detector">Anomaly Detector</option>
+        </select>
+        <br />
+        <small style="padding-left: 100px;">Incoming <code>.topic</code> overwrites this value</small>
+        <br />
+        <small style="padding-left: 100px;">"automl_forecast" | "automl_anomaly" | "forecast" | "neural_transfer" | "anomaly_detector"</small>
+    </div>
+
+    <div class="form-row dynamic" id="forecast_horizon">
+        <label for="node-input-forecast_horizon"><i class="fa fa-tag"></i> Forecast horizon</label>
+        <input type="number" id="node-input-forecast_horizon" placeholder="Forecast horizon">
+        <br />
+        <small style="padding-left: 100px;">Incoming <code>.forecast_horizon</code> overwrites this value</small>
+        <br />
+        <small style="padding-left: 100px;">"Forecast horizon. Steps ahead you want to predict."</small>
+    </div>
+
+    <div class="form-row dynamic" id="model">
+        <label for="node-input-model"><i class="fa fa-tag"></i> Model</label>
+        <select id="node-input-model" placeholder="Model">
+            <optgroup label="Statistical">
+                <option value="arima">ARIMA</option>
+                <option value="seasonal_exponential_smoothing">Seasonal exponential smoothing</option>
+                <option value="prophet">Prophet</option>
+                <option value="complex_es">Complex exponential smoothing</option>
+                <option value="ets">Exponential smoothing</option>
+            </optgroup>
+            <optgroup label="Transfer Learning">
+                <option value="nhits_m4_hourly">NHiTS M4 hourly</option>
+                <option value="nhits_m4_hourly_tiny">NHiTS M4 hourly tiny</option>
+                <option value="nhits_m4_daily">NHiTS M4 daily</option>
+                <option value="nhits_m4_monthly">NHiTS M4 monthly</option>
+                <option value="nhits_m4_yearly">NHiTS M4 yearly</option>
+                <option value="nbeats_m4_hourly">N-BEATS M4 hourly</option>
+                <option value="nbeats_m4_daily">N-BEATS M4 daily</option>
+                <option value="nbeats_m4_monthly">N-BEATS M4 monthly</option>
+                <option value="nbeats_m4_yearly">N-BEATS M4 yearly</option>
+            </optgroup>
+        </select>
+        <br />
+        <small style="padding-left: 100px;">Incoming <code>.model</code> overwrites this value</small>
+        <br />
+        <div style="padding-left: 100px;">
+            <small><b>Statistical:</b> "arima" | "seasonal_exponential_smoothing" | "prophet" | "complex_es" | "ets"</small><br/>
+            <small><b>Transfer Learning:</b> "nhits_m4_hourly" | "nhits_m4_hourly_tiny" | "nhits_m4_daily" | "nhits_m4_monthly" | "nhits_m4_yearly" | "nbeats_m4_hourly" | "nbeats_m4_daily" | "nbeats_m4_monthly" | "nbeats_m4_yearly"</small>
+        </div>
+    </div>
+
+    <div class="form-row dynamic" id="sensibility">
+        <label for="node-input-sensibility"><i class="fa fa-tag"></i> Sensibility</label>
+        <input type="number" id="node-input-sensibility" placeholder="Sensibility">
+        <br />
+        <small style="padding-left: 100px;">Incoming <code>.sensibility</code> overwrites this value</small>
+        <br />
+        <small style="padding-left: 100px;">"Confidence level for prediction intervals."</small>
+    </div>
+
+    <div class="form-row dynamic" id="seasonality">
+        <label for="node-input-seasonality"><i class="fa fa-tag"></i> Seasonality</label>
+        <input type="number" id="node-input-seasonality" placeholder="Seasonality">
+        <br />
+        <small style="padding-left: 100px;">Incoming <code>.seasonality</code> overwrites this value</small>
+        <br />
+        <small style="padding-left: 100px;">"24 for Hourly data."</small><br />
+        <small style="padding-left: 100px;">"7 for Daily data."</small><br />
+        <small style="padding-left: 100px;">"4 for Quarterly data."</small><br />
+        <small style="padding-left: 100px;">"12 for Monthly data."</small><br />
+        <small style="padding-left: 100px;">"1 for Yearly data."</small><br />
+    </div>
+
+    <div class="form-row dynamic" id="cv">
+        <label for="node-input-cv"><i class="fa fa-tag"></i> CV</label>
+        <input type="checkbox" id="node-input-cv"value="cv">
+        <br />
+        <small style="padding-left: 100px;">Incoming <code>.cv</code> overwrites this value</small>
+        <br />
+        <small style="padding-left: 100px;">"true" | "false". "Whether to perform cross validation."</small>
+    </div>
+
+    <div class="form-row dynamic" id="max_steps">
+        <label for="node-input-max_steps"><i class="fa fa-tag"></i> Max steps</label>
+        <input type="number" id="node-input-max_steps" placeholder="CV">
+        <br />
+        <small style="padding-left: 100px;">Incoming <code>.max_steps</code> overwrites this value</small>
+        <br />
+        <small style="padding-left: 100px;">"K-shot learning steps. Greater than zero means the model will use the model parameters as initialization and then will train during max_steps."</small>
+    </div>
+
+    <div class="form-row" id="timestamp">
+        <label for="node-input-timestamp"><i class="fa fa-tag"></i> Timestamp</label>
+        <input type="text" id="node-input-timestamp" placeholder="2022-05-10, 2022-05-11">
+        <br />
+        <small style="padding-left: 100px;">Incoming <code>.timestamp</code> overwrites this value</small>
+        <br />
+        <small style="padding-left: 100px;">"Each element of the list defines the timestamp of the time series."</small>
+    </div>
+
+    <div class="form-row" id="value">
+        <label for="node-input-value"><i class="fa fa-tag"></i> Value</label>
+        <input type="text" id="node-input-value" placeholder="0.5, 0.3">
+        <br />
+        <small style="padding-left: 100px;">Incoming <code>.value</code> overwrites this value</small>
+        <br />
+        <small style="padding-left: 100px;">"Time series values"</small>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var updateForm = function () {
+                $("#dialog-form .form-row.dynamic").each(function () {
+                    $(this).hide();
+                });
+                var selection = $("#node-input-topic").val();
+                switch (selection) {
+                    case "automl_forecast":
+                        $('#forecast_horizon').show();
+                        break;
+                    case "automl_anomaly":
+                        $('#sensibility').show();
+                        break;
+                    case "forecast":
+                        $('#forecast_horizon').show();
+                        $('#model').show();
+                        $('optgroup[label=Statistical]').show();
+                        $('#seasonality').show();
+                        $('#cv').show();
+                        break;
+                    case "neural_transfer":
+                        $('#forecast_horizon').show();
+                        $('#model').show();
+                        $('optgroup[label=Statistical]').hide();
+                        $('#max_steps').show();
+                        break;
+                    case "anomaly_detector":
+                        $('#forecast_horizon').show();
+                        $('#seasonality').show();
+                        $('#sensibility').show();
+                        $('#level').show();
+                        break;
+                    default:
+                        break;
+                }
+            }
+            $("#node-input-topic").on("change", updateForm);
+            $("#node-input-topic").ready(updateForm);
+        });
+    </script>
+</script>
+
+<script type="text/html" data-help-name="nixtla">
+    <p>Lightning Fast Time Series Forecasting and Anomaly Detection For Developers.</p>
+</script>
