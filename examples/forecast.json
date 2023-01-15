@@ -1,0 +1,145 @@
+[
+    {
+        "id": "1b85db221e66d831",
+        "type": "tab",
+        "label": "Example flow",
+        "disabled": false,
+        "info": "Flow to forecast stock data",
+        "env": []
+    },
+    {
+        "id": "cb247f663b76c1a5",
+        "type": "inject",
+        "z": "1b85db221e66d831",
+        "name": "trigger",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 230,
+        "y": 400,
+        "wires": [
+            [
+                "b6b459d32faba207"
+            ]
+        ]
+    },
+    {
+        "id": "b6b459d32faba207",
+        "type": "http request",
+        "z": "1b85db221e66d831",
+        "name": "get stock data",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/aapl?interval=1d&range=1mo",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 400,
+        "y": 400,
+        "wires": [
+            [
+                "213bc4a1d2d71798"
+            ]
+        ]
+    },
+    {
+        "id": "213bc4a1d2d71798",
+        "type": "function",
+        "z": "1b85db221e66d831",
+        "name": "pre-process data",
+        "func": "var payload = {};\nvar result = msg.payload.chart.result[0];\n\npayload.timestamp = result.timestamp.map(function (d) {\n    return new Date(d * 1000).toLocaleDateString(\"en-CA\");\n});\npayload.value = result.indicators.quote[0].close;\npayload.forecast_horizon = 1;\npayload.cv = false;\npayload.model = \"nbeats_m4_daily\";\npayload.seasonality = 1;\n\nvar newmsg = {};\nnewmsg.payload = payload;\nnewmsg.topic = \"forecast\";\n\nreturn newmsg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 610,
+        "y": 400,
+        "wires": [
+            [
+                "f27db529ad585b28",
+                "3706618e777e7f15"
+            ]
+        ]
+    },
+    {
+        "id": "f27db529ad585b28",
+        "type": "nixtla",
+        "z": "1b85db221e66d831",
+        "name": "forecast",
+        "nixtlaConfig": "795ea699321b57d2",
+        "topic": "forecast",
+        "forecast_horizon": "3",
+        "sensibility": 90,
+        "seasonality": 1,
+        "model": "nbeats_m4_daily",
+        "cv": false,
+        "max_steps": 0,
+        "timestamp": "2022-05-10, 2022-05-11, 2022-05-12, 2022-05-13, 2022-05-14, 2022-05-15, 2022-05-16, 2022-05-17",
+        "value": "0.5, 0.3, 0.1, 0.6, 0.8, 0.7, 0.9, 1.1",
+        "x": 800,
+        "y": 400,
+        "wires": [
+            [
+                "4d423d8d769eafe3"
+            ]
+        ]
+    },
+    {
+        "id": "4d423d8d769eafe3",
+        "type": "debug",
+        "z": "1b85db221e66d831",
+        "name": "forecast values",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 980,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "3706618e777e7f15",
+        "type": "debug",
+        "z": "1b85db221e66d831",
+        "name": "pre-processed data",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 830,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "795ea699321b57d2",
+        "type": "nixtla-config",
+        "name": "nixtla config"
+    }
+]

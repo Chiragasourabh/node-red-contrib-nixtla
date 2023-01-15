@@ -24,9 +24,13 @@
     },
     "license": "MIT",
     "node-red": {
+        "version": ">=1.0.0",
         "nodes": {
             "kiteconnect": "nixtla/nixtla.js",
             "kiteconnect-config": "nixtla/config/nixtla_config.js"
         }
-    }
+    },
+    "engines": {
+        "node": ">=12.0.0"
+      }
 }
